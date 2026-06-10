@@ -7,10 +7,13 @@
     "build": "next build",
     "start": "next start",
     "lint": "eslint",
-    "cron:run": "tsx scripts/cron.ts"
+    "cron:run": "tsx scripts/cron.ts",
+    "test": "vitest run",
+    "test:watch": "vitest"
   },
   "dependencies": {
     "better-sqlite3": "^12.10.0",
+    "framer-motion": "^12.40.0",
     "next": "16.2.9",
     "node-cron": "^4.2.1",
     "react": "19.2.4",
@@ -24,11 +27,13 @@
     "@types/node-cron": "^3.0.11",
     "@types/react": "^19",
     "@types/react-dom": "^19",
+    "@vitejs/plugin-react": "^6.0.2",
     "eslint": "^9",
     "eslint-config-next": "16.2.9",
     "tailwindcss": "^4",
     "tsx": "^4.22.4",
-    "typescript": "^5"
+    "typescript": "^5",
+    "vitest": "^4.1.8"
   },
   "pnpm": {
     "onlyBuiltDependencies": [

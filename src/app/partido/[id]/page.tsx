@@ -25,6 +25,8 @@ export default async function PartidoPage({ params }: Props) {
   const dateObj = new Date(match.date)
   const dateStr = dateObj.toLocaleDateString('es-CO', { weekday: 'long', day: 'numeric', month: 'long' }).toUpperCase()
   const hourStr = dateObj.toLocaleTimeString('es-CO', { hour: '2-digit', minute: '2-digit', timeZone: 'America/Bogota' })
+  const topScore = p.scoreDistribution.find(d => d.score === p.mostLikelyScore)
+  const topScorePct = topScore ? (topScore.probability * 100).toFixed(1) : '0.0'
 
   return (
     <main style={{ maxWidth: 900, margin: '0 auto', padding: '32px 16px' }}>
@@ -42,7 +44,7 @@ export default async function PartidoPage({ params }: Props) {
         gridTemplateColumns: '1fr auto 1fr',
         alignItems: 'center',
         gap: 24,
-        marginBottom: 48,
+        marginBottom: 40,
         padding: '32px 24px',
         border: '1px solid var(--border)',
         background: 'var(--surface)',
@@ -55,12 +57,12 @@ export default async function PartidoPage({ params }: Props) {
         </div>
 
         <div style={{ textAlign: 'center', padding: '0 16px' }}>
-          <div style={{ fontSize: 48, fontWeight: 900, color: 'var(--accent)', letterSpacing: '-0.04em', lineHeight: 1 }}>
+          <div style={{ fontSize: 52, fontWeight: 900, color: 'var(--accent)', letterSpacing: '-0.04em', lineHeight: 1 }}>
             {p.mostLikelyScore}
           </div>
           <div className="stat-label" style={{ marginTop: 8 }}>RESULTADO MÁS PROBABLE</div>
-          <div className="stat-label" style={{ marginTop: 4, color: 'var(--accent)' }}>
-            {(p.scoreDistribution.find(d => d.score === p.mostLikelyScore)?.probability ?? 0 * 100).toFixed(1)}%
+          <div style={{ color: 'var(--accent)', fontWeight: 700, fontSize: 18, marginTop: 4 }}>
+            {topScorePct}<span style={{ fontSize: 11, fontWeight: 400 }}>%</span>
           </div>
         </div>
 
@@ -73,7 +75,7 @@ export default async function PartidoPage({ params }: Props) {
       </div>
 
       <section style={{ marginBottom: 40 }}>
-        <SectionTitle>RESULTADO</SectionTitle>
+        <SectionTitle>RESULTADO 1X2</SectionTitle>
         <ProbBar
           segments={[
             { label: match.homeTeam.code, value: p.homeWinPct, color: 'var(--accent)' },
@@ -85,50 +87,66 @@ export default async function PartidoPage({ params }: Props) {
       </section>
 
       <section style={{ marginBottom: 40 }}>
-        <SectionTitle>GOLES ESPERADOS</SectionTitle>
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 8 }}>
-          <StatBlock label={`xG ${match.homeTeam.code}`} value={p.expectedHomeGoals.toFixed(2)} accent />
-          <StatBlock label={`xG ${match.awayTeam.code}`} value={p.expectedAwayGoals.toFixed(2)} />
-          <StatBlock label="MÁS DE 2.5" value={p.over25Pct.toFixed(0)} unit="%" />
-          <StatBlock label="MÁS DE 3.5" value={p.over35Pct.toFixed(0)} unit="%" />
+        <SectionTitle>DOBLE OPORTUNIDAD</SectionTitle>
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 8 }}>
+          <StatBlock label={`${match.homeTeam.code} O EMPATE (1X)`} value={p.doubleChance1X.toFixed(0)} unit="%" />
+          <StatBlock label={`${match.homeTeam.code} O ${match.awayTeam.code} (12)`} value={p.doubleChance12.toFixed(0)} unit="%" accent />
+          <StatBlock label={`EMPATE O ${match.awayTeam.code} (X2)`} value={p.doubleChanceX2.toFixed(0)} unit="%" />
         </div>
       </section>
 
       <section style={{ marginBottom: 40 }}>
-        <SectionTitle>OTROS MERCADOS</SectionTitle>
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 8 }}>
+        <SectionTitle>GOLES</SectionTitle>
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 8 }}>
+          <StatBlock label={`xG ${match.homeTeam.code}`} value={p.expectedHomeGoals.toFixed(2)} accent />
+          <StatBlock label={`xG ${match.awayTeam.code}`} value={p.expectedAwayGoals.toFixed(2)} />
+          <StatBlock label="MÁS DE 1.5" value={p.over15Pct.toFixed(0)} unit="%" />
+          <StatBlock label="MÁS DE 2.5" value={p.over25Pct.toFixed(0)} unit="%" />
+        </div>
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 8, marginTop: 8 }}>
+          <StatBlock label="MÁS DE 3.5" value={p.over35Pct.toFixed(0)} unit="%" />
           <StatBlock label="AMBOS ANOTAN" value={p.bttsYesPct.toFixed(0)} unit="%" />
-          <StatBlock label="CÓRNERS ESPERADOS" value={p.expectedCorners.toFixed(1)} />
+          <StatBlock label={`${match.homeTeam.code} GANA A CERO`} value={p.cleanSheetHomePct.toFixed(0)} unit="%" />
+          <StatBlock label={`${match.awayTeam.code} GANA A CERO`} value={p.cleanSheetAwayPct.toFixed(0)} unit="%" />
+        </div>
+      </section>
+
+      <section style={{ marginBottom: 40 }}>
+        <SectionTitle>CORNERS</SectionTitle>
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 8 }}>
+          <StatBlock label="CORNERS ESPERADOS" value={p.expectedCorners.toFixed(1)} accent />
+          <StatBlock label="MÁS DE 8.5" value={p.over85CornersPct.toFixed(0)} unit="%" />
+          <StatBlock label="MÁS DE 10.5" value={p.over105CornersPct.toFixed(0)} unit="%" />
+        </div>
+      </section>
+
+      <section style={{ marginBottom: 40 }}>
+        <SectionTitle>TARJETAS</SectionTitle>
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 8 }}>
           <StatBlock label="AMARILLAS ESPERADAS" value={p.expectedYellowCards.toFixed(1)} />
+          <StatBlock label="MÁS DE 3.5 AMARILLAS" value={p.over35YellowsPct.toFixed(0)} unit="%" />
+          <StatBlock label="PROBABILIDAD ROJA" value={p.redCardPct.toFixed(0)} unit="%" />
         </div>
       </section>
 
       <section style={{ marginBottom: 40 }}>
         <SectionTitle>DISTRIBUCIÓN DE MARCADORES</SectionTitle>
-        <div style={{
-          padding: 24,
-          border: '1px solid var(--border)',
-          background: 'var(--surface)',
-          overflowX: 'auto',
-        }}>
+        <div style={{ padding: 24, border: '1px solid var(--border)', background: 'var(--surface)', overflowX: 'auto' }}>
           <ScoreHeatmap
             data={p.scoreDistribution}
             homeCode={match.homeTeam.code}
             awayCode={match.awayTeam.code}
           />
         </div>
-        <div style={{ marginTop: 16, display: 'grid', gridTemplateColumns: 'repeat(5, 1fr)', gap: 4 }}>
-          {p.scoreDistribution.slice(0, 5).map(d => (
-            <div
-              key={d.score}
-              style={{
-                padding: '12px 8px',
-                border: '1px solid var(--border)',
-                background: 'var(--surface)',
-                textAlign: 'center',
-              }}
-            >
-              <div style={{ fontSize: 22, fontWeight: 800, color: 'var(--accent)' }}>{d.score}</div>
+        <div style={{ marginTop: 12, display: 'grid', gridTemplateColumns: 'repeat(6, 1fr)', gap: 4 }}>
+          {p.scoreDistribution.slice(0, 6).map(d => (
+            <div key={d.score} style={{
+              padding: '12px 8px',
+              border: d.score === p.mostLikelyScore ? '1px solid var(--accent)' : '1px solid var(--border)',
+              background: d.score === p.mostLikelyScore ? 'var(--accent-dim)' : 'var(--surface)',
+              textAlign: 'center',
+            }}>
+              <div style={{ fontSize: 20, fontWeight: 800, color: d.score === p.mostLikelyScore ? 'var(--accent)' : 'var(--text-primary)' }}>{d.score}</div>
               <div className="stat-label">{(d.probability * 100).toFixed(1)}%</div>
             </div>
           ))}
@@ -140,23 +158,16 @@ export default async function PartidoPage({ params }: Props) {
           <SectionTitle>PROBABILIDAD GOLEADOR</SectionTitle>
           <div style={{ display: 'grid', gap: 4 }}>
             {p.topScorers.map(scorer => (
-              <div
-                key={scorer.playerId}
-                style={{
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: 16,
-                  padding: '12px 16px',
-                  border: '1px solid var(--border)',
-                  background: 'var(--surface)',
-                }}
-              >
+              <div key={scorer.playerId} style={{
+                display: 'flex', alignItems: 'center', gap: 16,
+                padding: '12px 16px', border: '1px solid var(--border)', background: 'var(--surface)',
+              }}>
                 <div style={{ flex: 1 }}>
                   <div style={{ fontWeight: 700 }}>{scorer.playerName}</div>
                   <div className="stat-label">xG/partido: {scorer.expectedGoals.toFixed(2)}</div>
                 </div>
                 <div style={{ textAlign: 'right' }}>
-                  <div style={{ fontSize: 20, fontWeight: 800, color: 'var(--accent)' }}>
+                  <div style={{ fontSize: 22, fontWeight: 800, color: 'var(--accent)' }}>
                     {(scorer.goalProbability * 100).toFixed(0)}<span style={{ fontSize: 12 }}>%</span>
                   </div>
                 </div>
@@ -168,7 +179,7 @@ export default async function PartidoPage({ params }: Props) {
 
       <div style={{ marginTop: 48, paddingTop: 24, borderTop: '1px solid var(--border)' }}>
         <p className="stat-label">
-          CALCULADO CON POISSON + ELO &bull; {new Date(p.createdAt).toLocaleString('es-CO')} &bull; SOLO ENTRETENIMIENTO
+          CALCULADO CON POISSON + ELO &bull; {new Date(p.createdAt).toLocaleString('es-CO')} &bull; SOLO ANÁLISIS DE ENTRETENIMIENTO
         </p>
       </div>
     </main>

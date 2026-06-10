@@ -1,35 +1,54 @@
 import { getDb } from '../db/schema'
-import { WC2026_TEAMS } from './wc2026-teams'
+import { WC2026_TEAMS, GROUPS } from './wc2026-teams'
 import { upsertTeam } from '../db/queries'
 
-interface MatchSeed {
-  id: number
-  homeCode: string
-  awayCode: string
-  date: string
-  stage: string
-  group: string | null
-  venue: string
+function groupMatches(group: string, teams: typeof WC2026_TEAMS, startId: number, baseDate: string, venues: string[]): Array<{
+  id: number; homeCode: string; awayCode: string; date: string; stage: string; group: string; venue: string
+}> {
+  const [t1, t2, t3, t4] = teams
+  const pairs = [
+    [t1, t2], [t3, t4],
+    [t1, t3], [t2, t4],
+    [t1, t4], [t2, t3],
+  ] as const
+  const dates = [baseDate, baseDate, addDays(baseDate, 3), addDays(baseDate, 3), addDays(baseDate, 6), addDays(baseDate, 6)]
+  return pairs.map(([h, a], i) => ({
+    id: startId + i,
+    homeCode: h.code,
+    awayCode: a.code,
+    date: dates[i],
+    stage: `Grupo ${group}`,
+    group,
+    venue: venues[i % venues.length],
+  }))
 }
 
-const GROUP_MATCHES: MatchSeed[] = [
-  { id: 1, homeCode: 'ARG', awayCode: 'ECU', date: '2026-06-11', stage: 'Grupo A', group: 'A', venue: 'MetLife Stadium, NJ' },
-  { id: 2, homeCode: 'FRA', awayCode: 'PER', date: '2026-06-11', stage: 'Grupo A', group: 'A', venue: 'AT&T Stadium, TX' },
-  { id: 3, homeCode: 'ESP', awayCode: 'BEL', date: '2026-06-12', stage: 'Grupo B', group: 'B', venue: 'SoFi Stadium, CA' },
-  { id: 4, homeCode: 'BRA', awayCode: 'SUI', date: '2026-06-12', stage: 'Grupo B', group: 'B', venue: 'Rose Bowl, CA' },
-  { id: 5, homeCode: 'ENG', awayCode: 'CRO', date: '2026-06-13', stage: 'Grupo C', group: 'C', venue: 'Levi\'s Stadium, CA' },
-  { id: 6, homeCode: 'POR', awayCode: 'DEN', date: '2026-06-13', stage: 'Grupo C', group: 'C', venue: 'Lincoln Financial Field, PA' },
-  { id: 7, homeCode: 'GER', awayCode: 'ITA', date: '2026-06-14', stage: 'Grupo D', group: 'D', venue: 'Gillette Stadium, MA' },
-  { id: 8, homeCode: 'NED', awayCode: 'AUT', date: '2026-06-14', stage: 'Grupo D', group: 'D', venue: 'Empower Field, CO' },
-  { id: 9, homeCode: 'COL', awayCode: 'CHI', date: '2026-06-15', stage: 'Grupo E', group: 'E', venue: 'Estadio Azteca, CDMX' },
-  { id: 10, homeCode: 'URU', awayCode: 'PAR', date: '2026-06-15', stage: 'Grupo E', group: 'E', venue: 'Estadio BBVA, MTY' },
-  { id: 11, homeCode: 'MEX', awayCode: 'CAN', date: '2026-06-16', stage: 'Grupo F', group: 'F', venue: 'Estadio Akron, GDL' },
-  { id: 12, homeCode: 'USA', awayCode: 'CRC', date: '2026-06-16', stage: 'Grupo F', group: 'F', venue: 'SoFi Stadium, CA' },
-  { id: 13, homeCode: 'MAR', awayCode: 'NGA', date: '2026-06-17', stage: 'Grupo G', group: 'G', venue: 'BC Place, Vancouver' },
-  { id: 14, homeCode: 'SEN', awayCode: 'GHA', date: '2026-06-17', stage: 'Grupo G', group: 'G', venue: 'BMO Field, Toronto' },
-  { id: 15, homeCode: 'JPN', awayCode: 'AUS', date: '2026-06-18', stage: 'Grupo H', group: 'H', venue: 'Camping World Stadium, FL' },
-  { id: 16, homeCode: 'KOR', awayCode: 'KSA', date: '2026-06-18', stage: 'Grupo H', group: 'H', venue: 'Mercedes-Benz Stadium, GA' },
-]
+function addDays(dateStr: string, days: number): string {
+  const d = new Date(dateStr)
+  d.setDate(d.getDate() + days)
+  return d.toISOString().split('T')[0]
+}
+
+const VENUE_MAP: Record<string, string[]> = {
+  A: ['Estadio Azteca, CDMX', 'Estadio Akron, GDL', 'Estadio BBVA, MTY'],
+  B: ['MetLife Stadium, NJ', 'AT&T Stadium, TX', 'SoFi Stadium, CA'],
+  C: ['Levi\'s Stadium, CA', 'Rose Bowl, CA', 'Lincoln Financial Field, PA'],
+  D: ['AT&T Stadium, TX', 'Empower Field, CO', 'Estadio Azteca, CDMX'],
+  E: ['SoFi Stadium, CA', 'Gillette Stadium, MA', 'MetLife Stadium, NJ'],
+  F: ['Rose Bowl, CA', 'AT&T Stadium, TX', 'Estadio BBVA, MTY'],
+  G: ['Lincoln Financial Field, PA', 'Levi\'s Stadium, CA', 'BC Place, Vancouver'],
+  H: ['BC Place, Vancouver', 'BMO Field, Toronto', 'Mercedes-Benz Stadium, GA'],
+  I: ['Camping World Stadium, FL', 'Mercedes-Benz Stadium, GA', 'BMO Field, Toronto'],
+  J: ['MetLife Stadium, NJ', 'Gillette Stadium, MA', 'Empower Field, CO'],
+  K: ['Estadio Akron, GDL', 'Estadio BBVA, MTY', 'BC Place, Vancouver'],
+  L: ['BMO Field, Toronto', 'Camping World Stadium, FL', 'SoFi Stadium, CA'],
+}
+
+const GROUP_START_DATES: Record<string, string> = {
+  A: '2026-06-11', B: '2026-06-12', C: '2026-06-13', D: '2026-06-14',
+  E: '2026-06-15', F: '2026-06-16', G: '2026-06-17', H: '2026-06-18',
+  I: '2026-06-19', J: '2026-06-20', K: '2026-06-21', L: '2026-06-22',
+}
 
 export function seedDatabase() {
   const db = getDb()
@@ -47,10 +66,16 @@ export function seedDatabase() {
     VALUES (?, ?, ?, ?, ?, ?, ?)
   `)
 
-  for (const m of GROUP_MATCHES) {
-    const home = teamByCode[m.homeCode]
-    const away = teamByCode[m.awayCode]
-    if (!home || !away) continue
-    insertMatch.run(m.id, home.id, away.id, m.date, m.stage, m.group, m.venue)
+  let matchId = 1
+  for (const group of GROUPS) {
+    const teams = WC2026_TEAMS.filter(t => t.group === group)
+    const matches = groupMatches(group, teams, matchId, GROUP_START_DATES[group], VENUE_MAP[group])
+    for (const m of matches) {
+      const home = teamByCode[m.homeCode]
+      const away = teamByCode[m.awayCode]
+      if (!home || !away) continue
+      insertMatch.run(m.id, home.id, away.id, m.date, m.stage, m.group, m.venue)
+    }
+    matchId += 6
   }
 }

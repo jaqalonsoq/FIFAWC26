@@ -32,13 +32,23 @@ export interface Prediction {
   homeWinPct: number
   drawPct: number
   awayWinPct: number
+  doubleChance1X: number
+  doubleChance12: number
+  doubleChanceX2: number
   expectedHomeGoals: number
   expectedAwayGoals: number
+  over15Pct: number
   over25Pct: number
   over35Pct: number
   bttsYesPct: number
+  cleanSheetHomePct: number
+  cleanSheetAwayPct: number
   expectedCorners: number
+  over85CornersPct: number
+  over105CornersPct: number
   expectedYellowCards: number
+  over35YellowsPct: number
+  redCardPct: number
   mostLikelyScore: string
   topScorers: TopScorerPrediction[]
   scoreDistribution: ScoreDistributionEntry[]
@@ -64,4 +74,11 @@ export interface Player {
   position: string
   avgGoalsPerGame: number
   gamesPlayed: number
+}
+
+export interface MonteCarloOdds {
+  championOdds: Record<string, number>
+  finalistOdds: Record<string, number>
+  runs: number
+  createdAt: string
 }
